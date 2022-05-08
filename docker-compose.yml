@@ -1,0 +1,54 @@
+version: "3.9"
+   
+services:
+  db:
+    image: mysql
+    volumes:
+      - ./data/db:/var/lib/mysql/data
+    environment:
+      - MYSQL_DATABASE="whelp-test"
+      - MYSQL_ROOT_PASSWORD=root
+
+  rabbit:
+    hostname: rabbit
+    image: rabbitmq:latest
+    environment:
+     - RABBITMQ_DEFAULT_USER="admin"
+     - RABBITMQ_DEFAULT_PASS="root"
+    ports:
+     - '5672:5672'
+
+  
+
+  web:
+    build: .
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    volumes:
+      - .:/code
+
+    ports:
+      - 8000:8000
+    environment:
+      - MYSQL_DATABASE="whelp-test"
+      - MYSQL_ROOT_PASSWORD=root
+      - CELERY_BROKER_URL="amqp://admin:root@rabbit:5672"
+      - CELERY_RESULT_BACKEND="amqp://admin:root@rabbit:5672"
+    depends_on:
+      - db
+      - rabbit
+      - celery
+
+
+  celery:
+   build:
+      context: .
+      dockerfile: Dockerfile
+   command: celery -A worker worker --loglevel=info
+   volumes:
+      - .:/code
+   links:
+      - rabbit
+   depends_on:
+      - rabbit
+   
+
