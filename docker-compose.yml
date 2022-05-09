@@ -31,6 +31,7 @@ services:
     environment:
       - MYSQL_DATABASE="whelp-test"
       - MYSQL_ROOT_PASSWORD=root
+      - MYSQL_HOST=db
       - CELERY_BROKER_URL="amqp://admin:root@rabbit:5672"
       - CELERY_RESULT_BACKEND="amqp://admin:root@rabbit:5672"
     depends_on:
